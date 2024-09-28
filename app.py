@@ -32,75 +32,86 @@ mysql = MySQL(app)
 UPLOAD_FOLDER = 'uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-# Crear el directorio 'uploads' si no existe
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
 
-# Tipos de archivo permitidos
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-# Ruta para obtener todas las joyas
-@app.route('/api/joyas', methods=['GET'])
-def get_joyas():
-    cur = mysql.connection.cursor()
-    cur.execute("SELECT * FROM `gemini-joyas`")
-    joyas = cur.fetchall()
-    joyas_list = []
 
-    for joya in joyas:
-        imagen = joya[3]
+# RUTA PARA OBTENER TODOS LOS PRODUCTOS
+@app.route('/api/productos', methods=['GET'])
+def get_productos():
+    cur = mysql.connection.cursor()
+    cur.execute("SELECT * FROM `gemini-productos`")
+    productos = cur.fetchall()
+    lista_productos = []
+
+    for producto in productos:
+        imagen = producto[3]
         if isinstance(imagen, bytes):
             imagen = imagen.decode('utf-8')  # Convertir bytes a cadena de texto
-        imagen = imagen.strip()  # Eliminar espacios en blanco
+        imagen = imagen.strip()
 
-        joyas_list.append({
-            'id': joya[0],
-            'nombre': joya[1],
-            'precio': joya[2],
-            'imagen': f'http://127.0.0.1:5000/uploads/{imagen}',  # Construir URL correctamente
-            'cantidadStock': joya[4],
-            'color': joya[5]
+        lista_productos.append({
+            'id': producto[0],
+            'nombre': producto[1],
+            'precio': producto[2],
+            'imagen': f'http://127.0.0.1:5000/uploads/{imagen}',
+            'cantidadStock': producto[4],
+            'color': producto[5],
+            'descripcion': producto[6],
+            'material': producto[7],
+            'descuento': producto[8],
+            'porcentajeDescuento': producto[9],
+            'genero': producto[10]
         })
 
     cur.close()
-    return jsonify(joyas_list)
+    return jsonify(lista_productos)
+################################################################################
 
 
-# Ruta para obtener una joya por ID
-@app.route('/api/joyas/<int:id>', methods=['GET'])
-def get_joya(id):
+# RUTA PARA OBTENER UN PRODUCTO POR ID
+@app.route('/api/productos/<int:id>', methods=['GET'])
+def get_producto(id):
     cur = mysql.connection.cursor()
-    cur.execute("SELECT * FROM `gemini-joyas` WHERE id = %s", (id,))
-    joya = cur.fetchone()
+    cur.execute("SELECT * FROM `gemini-productos` WHERE id = %s", (id,))
+    producto = cur.fetchone()
 
-    if joya:
+    if producto:
         # Convertir el nombre del archivo a cadena si es necesario
-        imagen = joya[3]
+        imagen = producto[3]
         if isinstance(imagen, bytes):
             imagen = imagen.decode('utf-8')  # Convertir bytes a cadena de texto
         
-        joya_obj = {
-            'id': joya[0],
-            'nombre': joya[1],
-            'precio': joya[2],
+        producto_obj = {
+            'id': producto[0],
+            'nombre': producto[1],
+            'precio': producto[2],
             'imagen': f'http://127.0.0.1:5000/uploads/{imagen}',
-            'cantidadStock': joya[4],
-            'color': joya[5]
+            'cantidadStock': producto[4],
+            'color': producto[5],
+            'descripcion': producto[6],
+            'material': producto[7],
+            'descuento': producto[8],
+            'porcentajeDescuento': producto[9],
+            'genero': producto[10]
         }
         cur.close()
-        return jsonify(joya_obj)
+        return jsonify(producto_obj)
     else:
         cur.close()
-        return jsonify({'mensaje': 'Joya no encontrada'}), 404
+        return jsonify({'mensaje': 'Producto no encontrado'}), 404
+################################################################################
 
 
-# Ruta para agregar una nueva joya
-@app.route('/api/joyas/upload', methods=['POST'])
-def add_joya():
-    # Verificar que se envió una imagen
+# RUTA PARA AGREGAR UN NUEVO PRODUCTO
+@app.route('/api/productos/upload', methods=['POST'])
+def add_producto():
+    # verificamos que se envió una imagen
     imagen = request.files.get('imagen')
     if imagen and imagen.filename and allowed_file(imagen.filename):
         filename = imagen.filename
@@ -111,41 +122,58 @@ def add_joya():
         precio = request.form.get('precio')
         cantidadStock = request.form.get('cantidadStock')
         color = request.form.get('color')
+        descripcion = request.form.get('descripcion')  # campo opcional
+        material = request.form.get('material')  # campo obligatorio
+        descuento = request.form.get('descuento', 0)  # por defecto 0 (sin descuento)
+        porcentajeDescuento = request.form.get('porcentajeDescuento', 0)  # por defecto 0
+        genero = request.form.get('genero')  # campo obligatorio
 
-        if not all([nombre, precio, cantidadStock, color]):
-            return jsonify({'mensaje': 'Faltan datos de la joya'}), 400
+        if not all([nombre, precio, cantidadStock, color, material, genero]):
+            return jsonify({'mensaje': 'Faltan datos obligatorios del producto'}), 400
 
-        # Insertar la joya en la base de datos
-        cur = mysql.connection.cursor()
-        cur.execute("""
-            INSERT INTO `gemini-joyas` (nombre, precio, imagen, cantidadStock, color) 
-            VALUES (%s, %s, %s, %s, %s)
-        """, (nombre, float(precio), filename, int(cantidadStock), color))
-        mysql.connection.commit()
-        cur.close()
+        try:
+            precio = float(precio)
+            cantidadStock = int(cantidadStock)
+            descuento = int(descuento)
+            porcentajeDescuento = int(porcentajeDescuento)
 
-        return jsonify({'mensaje': 'Joya añadida con éxito'}), 201
+            cur = mysql.connection.cursor()
+            cur.execute("""
+                INSERT INTO `gemini-productos` 
+                (nombre, precio, imagen, cantidadStock, color, descripcion, material, descuento, porcentajeDescuento, genero) 
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """, (nombre, precio, filename, cantidadStock, color, descripcion, material, descuento, porcentajeDescuento, genero))
+            mysql.connection.commit()
+            cur.close()
+
+            return jsonify({'mensaje': 'Producto añadida con éxito'}), 201
+
+        except ValueError:
+            return jsonify({'mensaje': 'Error en el formato de los datos numéricos (precio, cantidadStock, descuento, porcentajeDescuento)'}), 400
+
     else:
-        return jsonify({'mensaje': 'Imagen no válida o formato no permitido'}), 400
+        return jsonify({'mensaje': 'Hubo algun error...'}), 400
+################################################################################
 
-# Ruta para eliminar una joya por ID
-@app.route('/api/joyas/<int:id>', methods=['DELETE'])
-def delete_joya(id):
+
+# RUTA PARA ELIMINAR UN PRODUCTO
+@app.route('/api/productos/<int:id>', methods=['DELETE'])
+def delete_producto(id):
     cur = mysql.connection.cursor()
     
-    # Verificar si la joya existe
-    cur.execute("SELECT * FROM `gemini-joyas` WHERE id = %s", (id,))
-    joya = cur.fetchone()
+    # verificamos si la joya existe
+    cur.execute("SELECT * FROM `gemini-productos` WHERE id = %s", (id,))
+    producto = cur.fetchone()
     
-    if joya:
-        # Eliminar la joya
-        cur.execute("DELETE FROM `gemini-joyas` WHERE id = %s", (id,))
+    if producto:
+        cur.execute("DELETE FROM `gemini-productos` WHERE id = %s", (id,))
         mysql.connection.commit()
         cur.close()
-        return jsonify({'mensaje': 'Joya eliminada con éxito'}), 200
+        return jsonify({'mensaje': 'Producto eliminado con éxito'}), 200
     else:
         cur.close()
-        return jsonify({'mensaje': 'Joya no encontrada'}), 404
+        return jsonify({'mensaje': 'Producto no encontrado'}), 404
+################################################################################
     
 
 
@@ -153,7 +181,7 @@ def delete_joya(id):
 @app.route('/upload', methods=['POST'])
 def upload_file():
     if 'file' not in request.files:
-        return jsonify({'mensaje': 'No file part'}), 400
+        return jsonify({'mensaje': 'No se eligió ninguna imagen'}), 400
     
     file = request.files['file']
     if file.filename == '':
@@ -163,26 +191,18 @@ def upload_file():
         filename = file.filename
         file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(file_path)
-        return jsonify({'mensaje': 'Archivo subido con éxito', 'file_url': f'{request.host_url}uploads/{filename}'}), 201
+        return jsonify({'mensaje': 'Imagen subida con éxito', 'file_url': f'{request.host_url}uploads/{filename}'}), 201
     else:
         return jsonify({'mensaje': 'Formato de archivo no permitido'}), 400
+################################################################################
 
 
-# Ruta para servir archivos estáticos
+# RUTA PARA SERVIR ARCHIVOS ESTÁTICOS
 @app.route('/uploads/<filename>')
 def uploaded_file(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+################################################################################
 
-@app.route('/test-connection', methods=['GET'])
-def test_connection():
-    try:
-        cur = mysql.connection.cursor()
-        cur.execute("SELECT 1")
-        cur.close()
-        return jsonify({"mensaje": "Conexión exitosa a MySQL"}), 200
-    except Exception as e:
-        return jsonify({"mensaje": f"Error al conectar: {str(e)}"}), 500
-    
 
 # Ruta para agregar un nuevo modelo de producto sin asociarlo a una joya específica
 @app.route('/api/modelos', methods=['POST'])
@@ -243,7 +263,9 @@ def get_modelos():
     except Exception as e:
         print(f"Error en get_modelos: {str(e)}")  # Imprime el error en la consola
         return jsonify({'mensaje': 'Error interno del servidor', 'error': str(e)}), 500
+    
 
+# RUTA PARA COMPRAR UN PRODUCTO
 @app.route('/checkout', methods=['POST'])
 def checkout():
     print("Petición recibida en /checkout")
@@ -274,7 +296,7 @@ def checkout():
                     'product_data': {'name': item['nombre']},
                     'unit_amount': int(item['precio'] * 100),
                 },
-                'cantidadStock': item['cantidadStock'],
+                'quantity': item['cantidadStock'],
             } for item in data['items']],
             mode='payment',
             success_url='http://localhost:3000/pago-completado',
@@ -296,88 +318,78 @@ def checkout():
     except Exception as e:
         print(f"Error en el checkout: {e}")
         return jsonify({'error': f'Ocurrió un error: {str(e)}'}), 500
+################################################################################
 
 
-# Ruta para obtener todas las secciones
-@app.route('/api/secciones-navegador', methods=['GET'])
-def get_secciones():
-    cur = mysql.connection.cursor()
-    cur.execute("SELECT * FROM `secciones-navegador`")
-    secciones = cur.fetchall()
-    secciones_list = []
-
-    for seccion in secciones:
-        imagen = seccion[2]
-        if isinstance(imagen, bytes):
-            imagen = imagen.decode('utf-8')  # Convertir bytes a cadena de texto
-        imagen = imagen.strip()  # Eliminar espacios en blanco
-
-        secciones_list.append({
-            'id': seccion[0],
-            'nombre_seccion': seccion[1],
-            'imagen_seccion': f'http://127.0.0.1:5000/{imagen}',  # Construir URL correctamente
-        })
-
-    cur.close()
-    return jsonify(secciones_list)
-
-@app.route('/api/secciones-navegador', methods=['POST'])
-def create_seccion():
+## RUTA PARA CREAR UN nuevo genero
+@app.route('/api/generos', methods=['POST'])
+def create_genero():
     try:
         cur = mysql.connection.cursor()
         
-        data = request.get_json()
-        id = data.get('id')
-        nombre_seccion = data.get('nombre_seccion')
-        imagen_seccion = data.get('imagen_seccion')
+        # Verificar que se ha subido una imagen
+        if 'imagen_genero' not in request.files:
+            return jsonify({'error': 'No se ha subido ninguna imagen'}), 400
+        
+        imagen_genero = request.files['imagen_genero']  # Obtener el archivo de imagen
+        
+        # Obtener el id y el nombre desde los datos de formulario
+        id = request.form.get('id')
+        nombre_genero = request.form.get('nombre_genero')
 
-        # Verificar que todos los campos necesarios estén presentes
-        if not all([id, nombre_seccion, imagen_seccion]):
+        if not all([id, nombre_genero, imagen_genero]):
             return jsonify({'error': 'Faltan campos requeridos'}), 400
 
-        ruta_imagen = f'{imagen_seccion}'  # asumiendo que la imagen está en la carpeta uploads
+        # Guardar la imagen en el servidor
+        ruta_imagen = os.path.join(app.config['UPLOAD_FOLDER'], imagen_genero.filename)
+        imagen_genero.save(ruta_imagen)  # Guardar el archivo en el servidor
 
-
+        # Insertar en la base de datos
         cur.execute(
-            "INSERT INTO `secciones-navegador` (id, nombre_seccion, imagen_seccion) VALUES (%s, %s, %s)",
-            (id, nombre_seccion, ruta_imagen)
+            "INSERT INTO `generos` (id, nombre_genero, imagen_genero) VALUES (%s, %s, %s)",
+            (id, nombre_genero, ruta_imagen)
         )
         mysql.connection.commit()
         cur.close()
 
-        return jsonify({'message': 'Sección creada exitosamente'}), 201
+        return jsonify({'message': 'Género creado exitosamente'}), 201
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+################################################################################
+
+
+# RUTA PARA OBTENER TODAS LAS GÉNEROS QUE TENEMOS
+@app.route('/api/generos', methods=['GET'])
+def get_generos():
+    cur = mysql.connection.cursor()
+    cur.execute("SELECT * FROM `generos`")
+    generos = cur.fetchall()
+    generos_list = []
+
+    for genero in generos:
+        imagen = genero[2]
+        if isinstance(imagen, bytes):
+            imagen = imagen.decode('utf-8')  # Convertir bytes a cadena de texto
+        imagen = imagen.strip()  # Eliminar espacios en blanco
+
+        generos_list.append({
+            'id': genero[0],
+            'nombre_genero': genero[1],
+            'imagen_genero': f'http://127.0.0.1:5000/{imagen}',
+        })
+
+    cur.close()
+    return jsonify(generos_list)
+################################################################################
 
 
 @app.after_request
 def after_request(response):
-    response.headers.add('Access-Control-Allow-Origin', 'http://localhost:3000')
+    response.headers.add('Access-Control-Allow-Origin', 'http://localhost:3000' )
     response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
     response.headers.add('Access-Control-Allow-Methods', 'GET,POST,OPTIONS,DELETE')
     return response
 
 if __name__ == '__main__':
     app.run(debug=True)
-
-
-
-# Ejemplo de GET o POST de /api/secciones-navegador
-# [
-#     {
-#         "id": 1,
-#         "imagen_seccion": "http://127.0.0.1:5000/uploads/uploads/Pendientes.png",
-#         "nombre_seccion": "Pendientes"
-#     },
-#     {
-#         "id": 2,
-#         "imagen_seccion": "http://127.0.0.1:5000/uploads/uploads/Cuadro2.jpg",
-#         "nombre_seccion": "Cuadros"
-#     },
-#     {
-#         "id": 3,
-#         "imagen_seccion": "http://127.0.0.1:5000/uploads/uploads/PlatoPostres.jpg",
-#         "nombre_seccion": "Otros"
-#     }
-# ]
