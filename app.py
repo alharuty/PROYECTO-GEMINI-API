@@ -3,22 +3,22 @@ from flask_cors import CORS
 from flask_mysqldb import MySQL
 import os
 import stripe
+import psycopg2
 
 app = Flask(__name__)
 
-# configuramos CORS
+# Configuramos CORS
 CORS(app)
 
-stripe.api_key = "sk_test_51Q290kH0Oxn0trnELbauIxm7bQHVujWZTtRA1F5QWcxG0iOnhrkBzd6OZ3CacW7wJ9Cgfz2RJBSRxZTS3EtfThya00K9sMQ5QJ"
+# Configuramos la conexión a la base de datos PostgreSQL
+db_url = os.getenv('DATABASE_URL')  # Obtiene la URL de conexión de Heroku
 
-
-# configuramos MySQL Workbench
-app.config['MYSQL_HOST'] = 'localhost'
-app.config['MYSQL_USER'] = 'root'
-app.config['MYSQL_PASSWORD'] = 'Trikitiki22.'
-app.config['MYSQL_DB'] = 'gemini-db'
-
-mysql = MySQL(app)
+# Conectar a la base de datos PostgreSQL
+try:
+    conn = psycopg2.connect(db_url)
+    cursor = conn.cursor()
+except Exception as e:
+    print(f"Error de conexión a la base de datos: {e}")
 
 
 UPLOAD_FOLDER = 'uploads'
