@@ -5,11 +5,7 @@ import os
 import stripe
 
 app = Flask(__name__)
-
-from flask import Flask
-from flask_cors import CORS
-
-app = Flask(__name__)
+app.debug = True
 
 # configuramos CORS
 CORS(app)
@@ -37,6 +33,11 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+@app.route('/')
+def home():
+    return "¡Hola, mundo!"
+
+
 
 ############## RUTA PARA OBTENER TODOS LOS PRODUCTOS ############################
 @app.route('/api/productos', methods=['GET'])
@@ -56,7 +57,7 @@ def get_productos():
             'id': producto[0],
             'nombre': producto[1],
             'precio': producto[2],
-            'imagen': f'http://127.0.0.1:5000/uploads/{imagen}',
+            'imagen': f'https://mere-kerrill-gemini-art-ec4d3f6c.koyeb.app/uploads/{imagen}',
             'cantidadStock': producto[4],
             'color': producto[5],
             'descripcion': producto[6],
@@ -88,7 +89,7 @@ def get_producto(id):
             'id': producto[0],
             'nombre': producto[1],
             'precio': producto[2],
-            'imagen': f'http://127.0.0.1:5000/uploads/{imagen}',
+            'imagen': f'https://mere-kerrill-gemini-art-ec4d3f6c.koyeb.app/uploads/{imagen}',
             'cantidadStock': producto[4],
             'color': producto[5],
             'descripcion': producto[6],
@@ -234,8 +235,8 @@ def checkout():
                 'quantity': item['cantidadStock'],
             } for item in data['items']],
             mode='payment',
-            success_url='http://localhost:3000/pago-completado',
-            cancel_url='http://localhost:3000/pago-cancelado',
+            success_url='https://mere-kerrill-gemini-art-ec4d3f6c.koyeb.app/pago-completado',
+            cancel_url='https://mere-kerrill-gemini-art-ec4d3f6c.koyeb.app/pago-cancelado',
             payment_intent_data={
                 'metadata': {
                     'nombre': cliente['nombre'],
@@ -308,7 +309,7 @@ def get_generos():
         generos_list.append({
             'id': genero[0],
             'nombre_genero': genero[1],
-            'imagen_genero': f'http://127.0.0.1:5000/{imagen}',
+            'imagen_genero': f'https://mere-kerrill-gemini-art-ec4d3f6c.koyeb.app/{imagen}',
         })
 
     cur.close()
