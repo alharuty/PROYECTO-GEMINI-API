@@ -11,16 +11,13 @@ from flask_cors import CORS
 
 app = Flask(__name__)
 
-# Configuración de CORS
-CORS(app, resources={r"/api/*": {
-    "origins": "http://localhost:3000",
-    "supports_credentials": True
-}})
+# configuramos CORS
+CORS(app)
 
 stripe.api_key = "sk_test_51Q290kH0Oxn0trnELbauIxm7bQHVujWZTtRA1F5QWcxG0iOnhrkBzd6OZ3CacW7wJ9Cgfz2RJBSRxZTS3EtfThya00K9sMQ5QJ"
 
 
-# Configuración de MySQL
+# configuramos MySQL Workbench
 app.config['MYSQL_HOST'] = 'localhost'
 app.config['MYSQL_USER'] = 'root'
 app.config['MYSQL_PASSWORD'] = 'Trikitiki22.'
@@ -28,7 +25,7 @@ app.config['MYSQL_DB'] = 'gemini-db'
 
 mysql = MySQL(app)
 
-# Configuración del directorio para almacenar imágenes
+
 UPLOAD_FOLDER = 'uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
@@ -41,7 +38,7 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
-# RUTA PARA OBTENER TODOS LOS PRODUCTOS
+############## RUTA PARA OBTENER TODOS LOS PRODUCTOS ############################
 @app.route('/api/productos', methods=['GET'])
 def get_productos():
     cur = mysql.connection.cursor()
@@ -52,7 +49,7 @@ def get_productos():
     for producto in productos:
         imagen = producto[3]
         if isinstance(imagen, bytes):
-            imagen = imagen.decode('utf-8')  # Convertir bytes a cadena de texto
+            imagen = imagen.decode('utf-8')
         imagen = imagen.strip()
 
         lista_productos.append({
@@ -74,7 +71,7 @@ def get_productos():
 ################################################################################
 
 
-# RUTA PARA OBTENER UN PRODUCTO POR ID
+############# RUTA PARA OBTENER UN PRODUCTO POR ID ##############################
 @app.route('/api/productos/<int:id>', methods=['GET'])
 def get_producto(id):
     cur = mysql.connection.cursor()
@@ -82,10 +79,10 @@ def get_producto(id):
     producto = cur.fetchone()
 
     if producto:
-        # Convertir el nombre del archivo a cadena si es necesario
+
         imagen = producto[3]
         if isinstance(imagen, bytes):
-            imagen = imagen.decode('utf-8')  # Convertir bytes a cadena de texto
+            imagen = imagen.decode('utf-8')
         
         producto_obj = {
             'id': producto[0],
@@ -108,7 +105,7 @@ def get_producto(id):
 ################################################################################
 
 
-# RUTA PARA AGREGAR UN NUEVO PRODUCTO
+############ RUTA PARA AGREGAR UN NUEVO PRODUCTO ###############################
 @app.route('/api/productos/upload', methods=['POST'])
 def add_producto():
     # verificamos que se envió una imagen
@@ -118,10 +115,10 @@ def add_producto():
         file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         imagen.save(file_path)
 
-        nombre = request.form.get('nombre')
-        precio = request.form.get('precio')
-        cantidadStock = request.form.get('cantidadStock')
-        color = request.form.get('color')
+        nombre = request.form.get('nombre') # campo obligatorio
+        precio = request.form.get('precio') # campo obligatorio
+        cantidadStock = request.form.get('cantidadStock') # campo obligatorio
+        color = request.form.get('color') # campo obligatorio
         descripcion = request.form.get('descripcion')  # campo opcional
         material = request.form.get('material')  # campo obligatorio
         descuento = request.form.get('descuento', 0)  # por defecto 0 (sin descuento)
@@ -155,8 +152,8 @@ def add_producto():
         return jsonify({'mensaje': 'Hubo algun error...'}), 400
 ################################################################################
 
-
-# RUTA PARA ELIMINAR UN PRODUCTO
+ 
+############### RUTA PARA ELIMINAR UN PRODUCTO #################################
 @app.route('/api/productos/<int:id>', methods=['DELETE'])
 def delete_producto(id):
     cur = mysql.connection.cursor()
@@ -176,8 +173,7 @@ def delete_producto(id):
 ################################################################################
     
 
-
-# Ruta para subir imágenes
+############## Ruta para subir imágenes ########################################
 @app.route('/upload', methods=['POST'])
 def upload_file():
     if 'file' not in request.files:
@@ -197,75 +193,14 @@ def upload_file():
 ################################################################################
 
 
-# RUTA PARA SERVIR ARCHIVOS ESTÁTICOS
+############### RUTA PARA SERVIR ARCHIVOS ESTÁTICOS ###########################
 @app.route('/uploads/<filename>')
 def uploaded_file(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 ################################################################################
 
-
-# Ruta para agregar un nuevo modelo de producto sin asociarlo a una joya específica
-@app.route('/api/modelos', methods=['POST'])
-def add_modelo():
-    try:
-        data = request.json  # Asegúrate de que el frontend está enviando datos en formato JSON
-
-        # Obtén los datos del cuerpo de la solicitud
-        id_nombre_modelo = data.get('id_nombre_modelo')
-        nombre_modelo = data.get('nombre_modelo')
-        precio_modelo = data.get('precio_modelo')
-
-        # Si id_nombre_modelo no es necesario, elimínalo
-        # id_nombre_modelo = data.get('id_nombre_modelo') 
-
-        # Validar que los datos requeridos estén presentes
-        if not nombre_modelo or not precio_modelo:
-            return jsonify({'mensaje': 'El nombre y el precio del modelo son requeridos'}), 400
-
-        # Insertar el nuevo modelo en la base de datos
-        cur = mysql.connection.cursor()
-        cur.execute("""
-            INSERT INTO `nombre-modelos` (id_nombre_modelo, nombre_modelo, precio_modelo)
-            VALUES (%s, %s, %s)
-        """, (id_nombre_modelo, nombre_modelo, precio_modelo))
-        mysql.connection.commit()
-        cur.close()
-
-        return jsonify({'mensaje': 'Modelo añadido con éxito'}), 201
-
-    except Exception as e:
-        print(f"Error en add_modelo: {str(e)}")  # Esto imprimirá el error exacto en la consola
-        return jsonify({'mensaje': 'Error interno del servidor', 'error': str(e)}), 500
-
-# Ruta para obtener todos los modelos de productos
-@app.route('/api/modelos', methods=['GET'])
-def get_modelos():
-    try:
-        # Realiza la consulta a la base de datos para obtener todos los modelos
-        cur = mysql.connection.cursor()
-        cur.execute("SELECT * FROM `nombre-modelos`")
-        modelos = cur.fetchall()  # Recuperar todos los registros
-
-        # Crear una lista para almacenar los modelos en formato JSON
-        modelos_list = []
-        for modelo in modelos:
-            modelos_list.append({
-                'id_nombre_modelo': modelo[0],
-                'nombre_modelo': modelo[1],
-                'precio_modelo': modelo[2]
-            })
-
-        cur.close()
-
-        # Devolver la lista de modelos en formato JSON
-        return jsonify(modelos_list), 200
-
-    except Exception as e:
-        print(f"Error en get_modelos: {str(e)}")  # Imprime el error en la consola
-        return jsonify({'mensaje': 'Error interno del servidor', 'error': str(e)}), 500
     
-
-# RUTA PARA COMPRAR UN PRODUCTO
+############## RUTA PARA COMPRAR UN PRODUCTO ##################################
 @app.route('/checkout', methods=['POST'])
 def checkout():
     print("Petición recibida en /checkout")
@@ -321,7 +256,7 @@ def checkout():
 ################################################################################
 
 
-## RUTA PARA CREAR UN nuevo genero
+############### RUTA PARA CREAR UN NUEVO GÉNERO ################################
 @app.route('/api/generos', methods=['POST'])
 def create_genero():
     try:
@@ -331,20 +266,18 @@ def create_genero():
         if 'imagen_genero' not in request.files:
             return jsonify({'error': 'No se ha subido ninguna imagen'}), 400
         
-        imagen_genero = request.files['imagen_genero']  # Obtener el archivo de imagen
+        imagen_genero = request.files['imagen_genero']
         
-        # Obtener el id y el nombre desde los datos de formulario
         id = request.form.get('id')
         nombre_genero = request.form.get('nombre_genero')
 
         if not all([id, nombre_genero, imagen_genero]):
             return jsonify({'error': 'Faltan campos requeridos'}), 400
 
-        # Guardar la imagen en el servidor
         ruta_imagen = os.path.join(app.config['UPLOAD_FOLDER'], imagen_genero.filename)
-        imagen_genero.save(ruta_imagen)  # Guardar el archivo en el servidor
+        imagen_genero.save(ruta_imagen)
 
-        # Insertar en la base de datos
+
         cur.execute(
             "INSERT INTO `generos` (id, nombre_genero, imagen_genero) VALUES (%s, %s, %s)",
             (id, nombre_genero, ruta_imagen)
@@ -359,7 +292,7 @@ def create_genero():
 ################################################################################
 
 
-# RUTA PARA OBTENER TODAS LAS GÉNEROS QUE TENEMOS
+############## RUTA PARA OBTENER TODOS LOS GÉNEROS QUE TENEMOS ####################
 @app.route('/api/generos', methods=['GET'])
 def get_generos():
     cur = mysql.connection.cursor()
@@ -370,9 +303,8 @@ def get_generos():
     for genero in generos:
         imagen = genero[2]
         if isinstance(imagen, bytes):
-            imagen = imagen.decode('utf-8')  # Convertir bytes a cadena de texto
-        imagen = imagen.strip()  # Eliminar espacios en blanco
-
+            imagen = imagen.decode('utf-8')
+        imagen = imagen.strip()
         generos_list.append({
             'id': genero[0],
             'nombre_genero': genero[1],
@@ -384,12 +316,52 @@ def get_generos():
 ################################################################################
 
 
-@app.after_request
-def after_request(response):
-    response.headers.add('Access-Control-Allow-Origin', 'http://localhost:3000' )
-    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
-    response.headers.add('Access-Control-Allow-Methods', 'GET,POST,OPTIONS,DELETE')
-    return response
+
+################ RUTA PARA EDITAR UN PRODUCTO ###################################
+@app.route('/api/productos/<int:id>/edit', methods=['PUT'])
+def edit_producto(id):
+    cur = mysql.connection.cursor()
+
+    cur.execute("SELECT * FROM `gemini-productos` WHERE id = %s", (id,))
+    producto = cur.fetchone()
+
+    if not producto:
+        cur.close()
+        return jsonify({'mensaje': 'Producto no encontrado'}), 404
+
+
+    if request.method == 'PUT' and request.content_type.startswith('multipart/form-data'):
+
+        nombre = request.form.get('nombre', producto[1])
+        precio = float(request.form.get('precio', producto[2]))
+        cantidadStock = int(request.form.get('cantidadStock', producto[4]))
+        color = request.form.get('color', producto[5])
+        descripcion = request.form.get('descripcion', producto[6])
+        material = request.form.get('material', producto[7])
+        descuento = int(request.form.get('descuento', producto[8]))
+        porcentajeDescuento = int(request.form.get('porcentajeDescuento', producto[9]))
+        genero = request.form.get('genero', producto[10])
+
+        try:
+            cur.execute(""" 
+                UPDATE `gemini-productos` 
+                SET nombre = %s, precio = %s, cantidadStock = %s, color = %s, 
+                    descripcion = %s, material = %s, descuento = %s, 
+                    porcentajeDescuento = %s, genero = %s 
+                WHERE id = %s
+            """, (nombre, precio, cantidadStock, color, descripcion, material, descuento, porcentajeDescuento, genero, id))
+
+            mysql.connection.commit()
+            cur.close()
+            return jsonify({'mensaje': 'Producto actualizado con éxito'}), 200
+
+        except Exception as e:
+            mysql.connection.rollback()
+            cur.close()
+            return jsonify({'mensaje': 'Error al actualizar el producto', 'error': str(e)}), 500
+
+    return jsonify({'mensaje': 'Tipo de contenido no soportado'}), 415
+################################################################################
 
 if __name__ == '__main__':
     app.run(debug=True)
