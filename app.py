@@ -6,11 +6,6 @@ import stripe
 
 app = Flask(__name__)
 
-from flask import Flask
-from flask_cors import CORS
-
-app = Flask(__name__)
-
 # configuramos CORS
 CORS(app)
 
