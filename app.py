@@ -13,7 +13,7 @@ CORS(app)
 stripe.api_key = os.getenv("STRIPE_SECRET_KEY", "sk_test_51Q290kH0Oxn0trnELbauIxm7bQHVujWZTtRA1F5QWcxG0iOnhrkBzd6OZ3CacW7wJ9Cgfz2RJBSRxZTS3EtfThya00K9sMQ5QJ")
 
 # Configuramos MySQL Workbench
-app.config['DB_HOST'] = os.getenv('DB_HOST', 'dpg-crt83h68ii6s73eiuuk0-a')
+app.config['DB_HOST'] = os.getenv('DB_HOST', 'dpg-crt83h68ii6s73eiuukO-a')
 app.config['DB_USER'] = os.getenv('DB_USER', 'gemini_db_user')
 app.config['DB_PASSWORD'] = os.getenv('DB_PASSWORD', 'HdrKEQb8cCGXHYmPKvYeDjCJ4BA39gPQ')
 app.config['DB_NAME'] = os.getenv('DB_NAME', 'gemini_db')
