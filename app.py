@@ -290,14 +290,19 @@ def get_generos():
     generos_list = []
 
     for genero in generos:
-        imagen = genero[2]
+        imagen = genero[2]  # La ruta de la imagen está almacenada en el campo 2 (imagen_genero)
+        
+        # Crear una URL accesible para la imagen
+        imagen_url = f"https://gemini-db-82cf11702797.herokuapp.com/uploads/{os.path.basename(imagen)}"
+        
         generos_list.append({
             'id': genero[0],
             'nombre_genero': genero[1],
-            'imagen_genero': f'https://gemini-db-82cf11702797.herokuapp.com/{imagen}',
+            'imagen_genero': imagen_url,
         })
 
     return jsonify(generos_list)
+
 ################################################################################
 
 
