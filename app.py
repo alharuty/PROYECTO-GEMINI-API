@@ -6,26 +6,21 @@ import stripe
 
 app = Flask(__name__)
 
-from flask import Flask
-from flask_cors import CORS
-
-app = Flask(__name__)
-
-# configuramos CORS
+# Configuramos CORS
 CORS(app)
 
-stripe.api_key = "sk_test_51Q290kH0Oxn0trnELbauIxm7bQHVujWZTtRA1F5QWcxG0iOnhrkBzd6OZ3CacW7wJ9Cgfz2RJBSRxZTS3EtfThya00K9sMQ5QJ"
+# Configuración de Stripe
+stripe.api_key = os.getenv("STRIPE_SECRET_KEY", "sk_test_51Q290kH0Oxn0trnELbauIxm7bQHVujWZTtRA1F5QWcxG0iOnhrkBzd6OZ3CacW7wJ9Cgfz2RJBSRxZTS3EtfThya00K9sMQ5QJ")
 
-
-# configuramos MySQL Workbench
-app.config['MYSQL_HOST'] = 'localhost'
-app.config['MYSQL_USER'] = 'root'
-app.config['MYSQL_PASSWORD'] = 'Trikitiki22.'
-app.config['MYSQL_DB'] = 'gemini-db'
+# Configuramos MySQL Workbench
+app.config['DB_HOST'] = os.getenv('DB_HOST', 'dpg-crt83h68ii6s73eiuuk0-a')
+app.config['DB_USER'] = os.getenv('DB_USER', 'gemini_db_user')
+app.config['DB_PASSWORD'] = os.getenv('DB_PASSWORD', 'HdrKEQb8cCGXHYmPKvYeDjCJ4BA39gPQ')
+app.config['DB_NAME'] = os.getenv('DB_NAME', 'gemini_db')
 
 mysql = MySQL(app)
 
-
+# Configuración del directorio de carga
 UPLOAD_FOLDER = 'uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
