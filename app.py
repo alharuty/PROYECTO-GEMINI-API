@@ -6,21 +6,26 @@ import stripe
 
 app = Flask(__name__)
 
-# Configuramos CORS
+from flask import Flask
+from flask_cors import CORS
+
+app = Flask(__name__)
+
+# configuramos CORS
 CORS(app)
 
-# Configuración de Stripe
-stripe.api_key = os.getenv("STRIPE_SECRET_KEY", "sk_test_51Q290kH0Oxn0trnELbauIxm7bQHVujWZTtRA1F5QWcxG0iOnhrkBzd6OZ3CacW7wJ9Cgfz2RJBSRxZTS3EtfThya00K9sMQ5QJ")
+stripe.api_key = "sk_test_51Q290kH0Oxn0trnELbauIxm7bQHVujWZTtRA1F5QWcxG0iOnhrkBzd6OZ3CacW7wJ9Cgfz2RJBSRxZTS3EtfThya00K9sMQ5QJ"
 
-# Configuramos MySQL Workbench
-app.config['DB_HOST'] = os.getenv('DB_HOST', 'dpg-crt83h68ii6s73eiuukO-a')
-app.config['DB_USER'] = os.getenv('DB_USER', 'gemini_db_user')
-app.config['DB_PASSWORD'] = os.getenv('DB_PASSWORD', 'HdrKEQb8cCGXHYmPKvYeDjCJ4BA39gPQ')
-app.config['DB_NAME'] = os.getenv('DB_NAME', 'gemini_db')
+
+# configuramos MySQL Workbench
+app.config['MYSQL_HOST'] = 'localhost'
+app.config['MYSQL_USER'] = 'root'
+app.config['MYSQL_PASSWORD'] = 'Trikitiki22.'
+app.config['MYSQL_DB'] = 'gemini-db'
 
 mysql = MySQL(app)
 
-# Configuración del directorio de carga
+
 UPLOAD_FOLDER = 'uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
@@ -51,7 +56,7 @@ def get_productos():
             'id': producto[0],
             'nombre': producto[1],
             'precio': producto[2],
-            'imagen': f'https://proyecto-gemini-api.onrender.com/uploads/{imagen}',
+            'imagen': f'http://127.0.0.1:5000/uploads/{imagen}',
             'cantidadStock': producto[4],
             'color': producto[5],
             'descripcion': producto[6],
@@ -83,7 +88,7 @@ def get_producto(id):
             'id': producto[0],
             'nombre': producto[1],
             'precio': producto[2],
-            'imagen': f'https://proyecto-gemini-api.onrender.com/uploads/{imagen}',
+            'imagen': f'http://127.0.0.1:5000/uploads/{imagen}',
             'cantidadStock': producto[4],
             'color': producto[5],
             'descripcion': producto[6],
@@ -303,7 +308,7 @@ def get_generos():
         generos_list.append({
             'id': genero[0],
             'nombre_genero': genero[1],
-            'imagen_genero': f'https://proyecto-gemini-api.onrender.com/{imagen}',
+            'imagen_genero': f'http://127.0.0.1:5000/{imagen}',
         })
 
     cur.close()
