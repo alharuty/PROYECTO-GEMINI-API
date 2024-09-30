@@ -294,7 +294,7 @@ def get_generos():
         generos_list.append({
             'id': genero[0],
             'nombre_genero': genero[1],
-            'imagen_genero': f'http://127.0.0.1:5000/{imagen}',
+            'imagen_genero': f'https://gemini-db-82cf11702797.herokuapp.com/{imagen}',
         })
 
     return jsonify(generos_list)
