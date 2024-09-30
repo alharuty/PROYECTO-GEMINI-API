@@ -250,6 +250,99 @@ def checkout():
         return jsonify({'error': str(e)}), 500
 ################################################################################
 
+############### RUTA PARA CREAR UN NUEVO GÉNERO ################################
+@app.route('/api/generos', methods=['POST'])
+def create_genero():
+    try:
+        # Verificar que se ha subido una imagen
+        if 'imagen_genero' not in request.files:
+            return jsonify({'error': 'No se ha subido ninguna imagen'}), 400
+        
+        imagen_genero = request.files['imagen_genero']
+        
+        nombre_genero = request.form.get('nombre_genero')
+
+        if not all([nombre_genero, imagen_genero]):
+            return jsonify({'error': 'Faltan campos requeridos'}), 400
+
+        ruta_imagen = os.path.join(app.config['UPLOAD_FOLDER'], imagen_genero.filename)
+        imagen_genero.save(ruta_imagen)
+
+        # Insertar en la base de datos
+        cursor.execute(
+            "INSERT INTO generos (nombre_genero, imagen_genero) VALUES (%s, %s)",
+            (nombre_genero, ruta_imagen)
+        )
+        conn.commit()
+
+        return jsonify({'message': 'Género creado exitosamente'}), 201
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+################################################################################
+
+
+############## RUTA PARA OBTENER TODOS LOS GÉNEROS QUE TENEMOS ####################
+@app.route('/api/generos', methods=['GET'])
+def get_generos():
+    cursor.execute("SELECT * FROM generos")
+    generos = cursor.fetchall()
+    generos_list = []
+
+    for genero in generos:
+        imagen = genero[2]
+        generos_list.append({
+            'id': genero[0],
+            'nombre_genero': genero[1],
+            'imagen_genero': f'http://127.0.0.1:5000/{imagen}',
+        })
+
+    return jsonify(generos_list)
+################################################################################
+
+
+
+################ RUTA PARA EDITAR UN PRODUCTO ###################################
+@app.route('/api/productos/<int:id>/edit', methods=['PUT'])
+def edit_producto(id):
+    cursor.execute("SELECT * FROM gemini-productos WHERE id = %s", (id,))
+    producto = cursor.fetchone()
+
+    if not producto:
+        return jsonify({'mensaje': 'Producto no encontrado'}), 404
+
+    if request.method == 'PUT' and request.content_type.startswith('multipart/form-data'):
+        nombre = request.form.get('nombre', producto[1])
+        precio = float(request.form.get('precio', producto[2]))
+        cantidadStock = int(request.form.get('cantidadStock', producto[4]))
+        color = request.form.get('color', producto[5])
+        descripcion = request.form.get('descripcion', producto[6])
+        material = request.form.get('material', producto[7])
+        descuento = int(request.form.get('descuento', producto[8]))
+        porcentajeDescuento = int(request.form.get('porcentajeDescuento', producto[9]))
+        genero = request.form.get('genero', producto[10])
+
+        try:
+            cursor.execute(""" 
+                UPDATE gemini-productos 
+                SET nombre = %s, precio = %s, cantidadStock = %s, color = %s, 
+                    descripcion = %s, material = %s, descuento = %s, 
+                    porcentajeDescuento = %s, genero = %s 
+                WHERE id = %s
+            """, (nombre, precio, cantidadStock, color, descripcion, material, descuento, porcentajeDescuento, genero, id))
+
+            conn.commit()
+            return jsonify({'mensaje': 'Producto actualizado con éxito'}), 200
+
+        except Exception as e:
+            conn.rollback()
+            return jsonify({'mensaje': 'Error al actualizar el producto', 'error': str(e)}), 500
+
+    return jsonify({'mensaje': 'Tipo de contenido no soportado'}), 415
+################################################################################
+
+
+
 
 # Levantamos el servidor
 if __name__ == '__main__':
