@@ -14,10 +14,10 @@ stripe.api_key = "sk_test_51Q290kH0Oxn0trnELbauIxm7bQHVujWZTtRA1F5QWcxG0iOnhrkBz
 
 
 # configuramos MySQL Workbench
-app.config['MYSQL_HOST'] = os.getenv('mysql.railway.internal')
-app.config['MYSQL_USER'] = os.getenv('root')
-app.config['MYSQL_PASSWORD'] = os.getenv('gDOrXJMvYYTzobGvKSHLBQdyChqDuFdD')
-app.config['MYSQL_DB'] = os.getenv('railway')
+app.config['MYSQL_HOST'] = os.getenv('MYSQL_HOST')
+app.config['MYSQL_USER'] = os.getenv('MYSQL_USER')
+app.config['MYSQL_PASSWORD'] = os.getenv('MYSQL_PASSWORD')
+app.config['MYSQL_DB'] = os.getenv('MYSQL_DB')
 
 mysql = MySQL(app)
 
