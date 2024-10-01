@@ -3,9 +3,13 @@ from flask_cors import CORS
 from flask_mysqldb import MySQL
 import os
 import stripe
+import pymysql
+
 
 app = Flask(__name__)
 app.debug = True
+
+pymysql.install_as_MySQLdb()
 
 # configuramos CORS
 CORS(app)
