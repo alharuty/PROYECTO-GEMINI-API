@@ -14,10 +14,10 @@ stripe.api_key = "sk_test_51Q290kH0Oxn0trnELbauIxm7bQHVujWZTtRA1F5QWcxG0iOnhrkBz
 
 
 # configuramos MySQL Workbench
-app.config['MYSQL_HOST'] = 'localhost'
-app.config['MYSQL_USER'] = 'root'
-app.config['MYSQL_PASSWORD'] = 'Trikitiki22.'
-app.config['MYSQL_DB'] = 'gemini-db'
+app.config['MYSQL_HOST'] = os.getenv('mysql.railway.internal')
+app.config['MYSQL_USER'] = os.getenv('root')
+app.config['MYSQL_PASSWORD'] = os.getenv('gDOrXJMvYYTzobGvKSHLBQdyChqDuFdD')
+app.config['MYSQL_DB'] = os.getenv('railway')
 
 mysql = MySQL(app)
 
