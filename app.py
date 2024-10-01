@@ -3,10 +3,6 @@ from flask_cors import CORS
 from flask_mysqldb import MySQL
 import os
 import stripe
-import pymysql 
-
-# Configurar pymysql como MySQLdb
-pymysql.install_as_MySQLdb()
 
 app = Flask(__name__)
 app.debug = True
@@ -61,7 +57,7 @@ def get_productos():
             'id': producto[0],
             'nombre': producto[1],
             'precio': producto[2],
-            'imagen': f'https://mere-kerrill-gemini-art-ec4d3f6c.koyeb.app/uploads/{imagen}',
+            'imagen': f'/uploads/{imagen}',
             'cantidadStock': producto[4],
             'color': producto[5],
             'descripcion': producto[6],
@@ -93,7 +89,7 @@ def get_producto(id):
             'id': producto[0],
             'nombre': producto[1],
             'precio': producto[2],
-            'imagen': f'https://mere-kerrill-gemini-art-ec4d3f6c.koyeb.app/uploads/{imagen}',
+            'imagen': f'http://127.0.0.1:5000uploads/{imagen}',
             'cantidadStock': producto[4],
             'color': producto[5],
             'descripcion': producto[6],
@@ -239,8 +235,8 @@ def checkout():
                 'quantity': item['cantidadStock'],
             } for item in data['items']],
             mode='payment',
-            success_url='https://mere-kerrill-gemini-art-ec4d3f6c.koyeb.app/pago-completado',
-            cancel_url='https://mere-kerrill-gemini-art-ec4d3f6c.koyeb.app/pago-cancelado',
+            success_url='http://127.0.0.1:5000/pago-completado',
+            cancel_url='http://127.0.0.1:5000/pago-cancelado',
             payment_intent_data={
                 'metadata': {
                     'nombre': cliente['nombre'],
@@ -313,7 +309,7 @@ def get_generos():
         generos_list.append({
             'id': genero[0],
             'nombre_genero': genero[1],
-            'imagen_genero': f'https://mere-kerrill-gemini-art-ec4d3f6c.koyeb.app/{imagen}',
+            'imagen_genero': f'http://127.0.0.1:5000/{imagen}',
         })
 
     cur.close()
