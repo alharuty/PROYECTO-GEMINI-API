@@ -3,13 +3,8 @@ from flask_cors import CORS
 from flask_mysqldb import MySQL
 import os
 import stripe
-import pymysql
-
 
 app = Flask(__name__)
-app.debug = True
-
-pymysql.install_as_MySQLdb()
 
 # configuramos CORS
 CORS(app)
@@ -18,10 +13,10 @@ stripe.api_key = "sk_test_51Q290kH0Oxn0trnELbauIxm7bQHVujWZTtRA1F5QWcxG0iOnhrkBz
 
 
 # configuramos MySQL Workbench
-app.config['MYSQL_HOST'] = os.getenv('MYSQL_HOST')
-app.config['MYSQL_USER'] = os.getenv('MYSQL_USER')
-app.config['MYSQL_PASSWORD'] = os.getenv('MYSQL_PASSWORD')
-app.config['MYSQL_DB'] = os.getenv('MYSQL_DB')
+app.config['MYSQL_HOST'] = 'localhost'
+app.config['MYSQL_USER'] = 'root'
+app.config['MYSQL_PASSWORD'] = 'Trikitiki22.'
+app.config['MYSQL_DB'] = 'gemini-db'
 
 mysql = MySQL(app)
 
@@ -36,11 +31,6 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
-@app.route('/')
-def home():
-    return "¡Hola, mundo!"
-
 
 
 ############## RUTA PARA OBTENER TODOS LOS PRODUCTOS ############################
@@ -61,7 +51,7 @@ def get_productos():
             'id': producto[0],
             'nombre': producto[1],
             'precio': producto[2],
-            'imagen': f'/uploads/{imagen}',
+            'imagen': f'http://127.0.0.1:5000/uploads/{imagen}',
             'cantidadStock': producto[4],
             'color': producto[5],
             'descripcion': producto[6],
@@ -93,7 +83,7 @@ def get_producto(id):
             'id': producto[0],
             'nombre': producto[1],
             'precio': producto[2],
-            'imagen': f'http://127.0.0.1:5000uploads/{imagen}',
+            'imagen': f'http://127.0.0.1:5000/uploads/{imagen}',
             'cantidadStock': producto[4],
             'color': producto[5],
             'descripcion': producto[6],
@@ -239,8 +229,8 @@ def checkout():
                 'quantity': item['cantidadStock'],
             } for item in data['items']],
             mode='payment',
-            success_url='http://127.0.0.1:5000/pago-completado',
-            cancel_url='http://127.0.0.1:5000/pago-cancelado',
+            success_url='http://localhost:3000/pago-completado',
+            cancel_url='http://localhost:3000/pago-cancelado',
             payment_intent_data={
                 'metadata': {
                     'nombre': cliente['nombre'],
@@ -369,4 +359,4 @@ def edit_producto(id):
 ################################################################################
 
 if __name__ == '__main__':
-    app.run(host="0.0.0.0", port=5000)
+    app.run(debug=True)
